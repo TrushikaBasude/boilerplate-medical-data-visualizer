@@ -3,58 +3,89 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-# 1
-df = None
 
-# 2
-df['overweight'] = None
-
-# 3
-
-
-# 4
 def draw_cat_plot():
-    # 5
-    df_cat = None
+    # 1. Import data
+    df = pd.read_csv('medical_examination.csv')
 
+    # 2. Add overweight column
+    df['overweight'] = (
+        df['weight'] / ((df['height'] / 100) ** 2) > 25
+    ).astype(int)
 
-    # 6
-    df_cat = None
-    
+    # 3. Normalize cholesterol and gluc
+    df['cholesterol'] = (df['cholesterol'] > 1).astype(int)
+    df['gluc'] = (df['gluc'] > 1).astype(int)
 
-    # 7
+    # 4. Draw categorical plot
+    df_cat = pd.melt(
+        df,
+        id_vars=['cardio'],
+        value_vars=[
+            'cholesterol', 'gluc', 'smoke',
+            'alco', 'active', 'overweight'
+        ]
+    )
 
+    # 5. Group and reformat data
+    df_cat = df_cat.groupby(
+        ['cardio', 'variable', 'value']
+    ).size().reset_index(name='total')
 
+    # 6. Draw catplot
+    fig = sns.catplot(
+        data=df_cat,
+        x='variable',
+        y='total',
+        hue='value',
+        col='cardio',
+        kind='bar'
+    ).fig
 
-    # 8
-    fig = None
-
-
-    # 9
     fig.savefig('catplot.png')
     return fig
 
 
-# 10
 def draw_heat_map():
-    # 11
-    df_heat = None
+    # 7. Clean the data
+    df = pd.read_csv('medical_examination.csv')
 
-    # 12
-    corr = None
+    df['overweight'] = (
+        df['weight'] / ((df['height'] / 100) ** 2) > 25
+    ).astype(int)
 
-    # 13
-    mask = None
+    df['cholesterol'] = (df['cholesterol'] > 1).astype(int)
+    df['gluc'] = (df['gluc'] > 1).astype(int)
 
+    df_heat = df[
+        (df['ap_lo'] <= df['ap_hi']) &
+        (df['height'] >= df['height'].quantile(0.025)) &
+        (df['height'] <= df['height'].quantile(0.975)) &
+        (df['weight'] >= df['weight'].quantile(0.025)) &
+        (df['weight'] <= df['weight'].quantile(0.975))
+    ]
 
+    # 8. Calculate correlation matrix
+    corr = df_heat.corr()
 
-    # 14
-    fig, ax = None
+    # 9. Generate mask
+    mask = np.triu(np.ones_like(corr, dtype=bool))
 
-    # 15
+    # 10. Set up matplotlib figure
+    fig, ax = plt.subplots(figsize=(12, 12))
 
+    # 11. Plot heatmap
+    sns.heatmap(
+        corr,
+        mask=mask,
+        annot=True,
+        fmt='.1f',
+        square=True,
+        linewidths=0.5,
+        cbar_kws={'shrink': 0.5},
+        center=0,
+        ax=ax
+    )
 
-
-    # 16
     fig.savefig('heatmap.png')
     return fig
